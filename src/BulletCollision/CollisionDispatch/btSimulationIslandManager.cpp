@@ -340,6 +340,7 @@ void btSimulationIslandManager::buildIslands(btDispatcher* dispatcher, btCollisi
 
 
 ///@todo: this is random access, it can be walked 'cache friendly'!
+//アイランド＝オブジェクトの処理グループのこと
 void btSimulationIslandManager::buildAndProcessIslands(btDispatcher* dispatcher, btCollisionWorld* collisionWorld, IslandCallback* callback)
 {
 	buildIslands(dispatcher, collisionWorld);

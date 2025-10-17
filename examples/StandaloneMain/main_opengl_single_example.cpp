@@ -66,9 +66,12 @@ public:
 };
 int main(int argc, char* argv[])
 {
+	//ウィンドウを作成
 	SimpleOpenGL3App* app = new SimpleOpenGL3App("Bullet Standalone Example", 1024, 768, true);
 
+	//おそらく、ウィンドウをクリックしたときのコールバック関数の参照先を指定している
 	prevMouseButtonCallback = app->m_window->getMouseButtonCallback();
+	//上に同じく、こちらはカーソルを移動させたときの
 	prevMouseMoveCallback = app->m_window->getMouseMoveCallback();
 
 	app->m_window->setMouseButtonCallback((b3MouseButtonCallback)OnMouseDown);

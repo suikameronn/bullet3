@@ -146,10 +146,13 @@ void btRigidBody::setDamping(btScalar lin_damping, btScalar ang_damping)
 }
 
 ///applyDamping damps the velocity, using the given m_linearDamping and m_angularDamping
+//applyDamping は、指定された m_linearDamping（線形減衰）と m_angularDamping（角減衰）を使用して、速度を減衰させます
 void btRigidBody::applyDamping(btScalar timeStep)
 {
 	//On new damping: see discussion/issue report here: http://code.google.com/p/bullet/issues/detail?id=74
 	//todo: do some performance comparisons (but other parts of the engine are probably bottleneck anyway
+	//新しいダンピング（減衰）機能について：こちらの議論やイシューレポートを参照してください：http://code.google.com/p/bullet/issues/detail?id=74
+	//todo: パフォーマンスの比較をすること（ただし、エンジンの他の部分がどうせボトルネックになっている可能性が高い）
 
 #ifdef BT_USE_OLD_DAMPING_METHOD
 	m_linearVelocity *= btMax((btScalar(1.0) - timeStep * m_linearDamping), btScalar(0.0));
@@ -161,6 +164,8 @@ void btRigidBody::applyDamping(btScalar timeStep)
 
 	if (m_additionalDamping)
 	{
+		//この機能は使わない
+
 		//Additional damping can help avoiding lowpass jitter motion, help stability for ragdolls etc.
 		//Such damping is undesirable, so once the overall simulation quality of the rigid body dynamics system has improved, this should become obsolete
 		if ((m_angularVelocity.length2() < m_additionalAngularDampingThresholdSqr) &&

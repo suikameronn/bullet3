@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 	CommonExampleInterface* example = BasicExampleCreateFunc(options);
 
 	example->initPhysics();
-	example->stepSimulation(1.f / 60.f);
+	example->stepSimulation(1.f / 6000.f);
 	example->exitPhysics();
 
 	delete example;

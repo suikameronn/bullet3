@@ -29,8 +29,10 @@ SIMD_FORCE_INLINE btVector3 btAabbSupport(const btVector3& halfExtents, const bt
 class btTransformUtil
 {
 public:
+	//現在の座標、速度、角速度、時間ステップ、結果となる座標?
 	static void integrateTransform(const btTransform& curTrans, const btVector3& linvel, const btVector3& angvel, btScalar timeStep, btTransform& predictedTransform)
 	{
+		//座標の更新
 		predictedTransform.setOrigin(curTrans.getOrigin() + linvel * timeStep);
 		//	#define QUATERNION_DERIVATIVE
 #ifdef QUATERNION_DERIVATIVE
@@ -58,6 +60,7 @@ public:
 		if (fAngle < btScalar(0.001))
 		{
 			// use Taylor's expansions of sync function
+			//角速度からクォータニオンを計算する
 			axis = angvel * (btScalar(0.5) * timeStep - (timeStep * timeStep * timeStep) * (btScalar(0.020833333333)) * fAngle * fAngle);
 		}
 		else
@@ -65,6 +68,8 @@ public:
 			// sync(fAngle) = sin(c*fAngle)/t
 			axis = angvel * (btSin(btScalar(0.5) * fAngle * timeStep) / fAngle);
 		}
+
+		//あたらしい姿勢のクォータニオンを計算
 		btQuaternion dorn(axis.x(), axis.y(), axis.z(), btCos(fAngle * timeStep * btScalar(0.5)));
 		btQuaternion orn0 = curTrans.getRotation();
 

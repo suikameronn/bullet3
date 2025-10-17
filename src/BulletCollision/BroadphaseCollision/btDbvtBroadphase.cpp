@@ -413,7 +413,7 @@ void btDbvtBroadphase::setAabbForceUpdate(btBroadphaseProxy* absproxy,
 	}
 }
 
-//
+//ブロードフェーズ
 void btDbvtBroadphase::calculateOverlappingPairs(btDispatcher* dispatcher)
 {
 	collide(dispatcher);

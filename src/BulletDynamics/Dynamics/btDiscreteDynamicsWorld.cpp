@@ -459,6 +459,7 @@ void btDiscreteDynamicsWorld::internalSingleStepSimulation(btScalar timeStep)
 	}
 
 	///apply gravity, predict motion
+	//重力を加え、動きを予測する
 	predictUnconstraintMotion(timeStep);
 
 	btDispatcherInfo& dispatchInfo = getDispatchInfo();
@@ -467,16 +468,20 @@ void btDiscreteDynamicsWorld::internalSingleStepSimulation(btScalar timeStep)
 	dispatchInfo.m_stepCount = 0;
 	dispatchInfo.m_debugDraw = getDebugDrawer();
 
+	//ブロードフェーズのさらに前の衝突予測の処理
 	createPredictiveContacts(timeStep);
 
 	///perform collision detection
+	//衝突判定の予測ののちに、実際の判定もする
 	performDiscreteCollisionDetection();
+
 
 	calculateSimulationIslands();
 
 	getSolverInfo().m_timeStep = timeStep;
 
 	///solve contact and other joint constraints
+	//衝突を解消
 	solveConstraints(getSolverInfo());
 
 	///CallbackTriggers();
@@ -678,6 +683,7 @@ void btDiscreteDynamicsWorld::removeCharacter(btActionInterface* character)
 	removeAction(character);
 }
 
+//衝突を解消
 void btDiscreteDynamicsWorld::solveConstraints(btContactSolverInfo& solverInfo)
 {
 	BT_PROFILE("solveConstraints");
@@ -699,6 +705,7 @@ void btDiscreteDynamicsWorld::solveConstraints(btContactSolverInfo& solverInfo)
 	m_constraintSolver->prepareSolve(getCollisionWorld()->getNumCollisionObjects(), getCollisionWorld()->getDispatcher()->getNumManifolds());
 
 	/// solve all the constraints for this island
+	//ここで実際に衝突を解消する
 	m_islandManager->buildAndProcessIslands(getCollisionWorld()->getDispatcher(), getCollisionWorld(), m_solverIslandCallback);
 
 	m_solverIslandCallback->processConstraints();
@@ -1078,6 +1085,7 @@ void btDiscreteDynamicsWorld::integrateTransforms(btScalar timeStep)
 					btVector3 rel_pos0 = pos1 - body0->getWorldTransform().getOrigin();
 					btVector3 rel_pos1 = pos2 - body1->getWorldTransform().getOrigin();
 
+					//おそらく衝突を解消するためのインパルスを加えている
 					if (body0)
 						body0->applyImpulse(imp, rel_pos0);
 					if (body1)
@@ -1091,15 +1099,17 @@ void btDiscreteDynamicsWorld::integrateTransforms(btScalar timeStep)
 void btDiscreteDynamicsWorld::predictUnconstraintMotion(btScalar timeStep)
 {
 	BT_PROFILE("predictUnconstraintMotion");
+	//すべてのオブジェクトに対して繰り返す
 	for (int i = 0; i < m_nonStaticRigidBodies.size(); i++)
 	{
 		btRigidBody* body = m_nonStaticRigidBodies[i];
 		if (!body->isStaticOrKinematicObject())
 		{
 			//don't integrate/update velocities here, it happens in the constraint solver
-
+			//ここでは速度を積分・更新しないでください。それは拘束ソルバー（constraint solver）で行われます
 			body->applyDamping(timeStep);
 
+			//オブジェクトの速度と角速度から、座標と姿勢を計算
 			body->predictIntegratedTransform(timeStep, body->getInterpolationWorldTransform());
 		}
 	}

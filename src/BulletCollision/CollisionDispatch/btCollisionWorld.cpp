@@ -152,9 +152,12 @@ void btCollisionWorld::addCollisionObject(btCollisionObject* collisionObject, in
 
 void btCollisionWorld::updateSingleAabb(btCollisionObject* colObj)
 {
+
+	//AABBを計算している
 	btVector3 minAabb, maxAabb;
 	colObj->getCollisionShape()->getAabb(colObj->getWorldTransform(), minAabb, maxAabb);
 	//need to increase the aabb for contact thresholds
+	//AABBを増やしてコンタクトしきい値を調整したい
 	btVector3 contactThreshold(gContactBreakingThreshold, gContactBreakingThreshold, gContactBreakingThreshold);
 	minAabb -= contactThreshold;
 	maxAabb += contactThreshold;
@@ -172,6 +175,7 @@ void btCollisionWorld::updateSingleAabb(btCollisionObject* colObj)
 	btBroadphaseInterface* bp = (btBroadphaseInterface*)m_broadphasePairCache;
 
 	//moving objects should be moderately sized, probably something wrong if not
+	//動くオブジェクトのサイズが中程度であるべきで、そうでない場合は何らかの問題がある可能性が高い
 	if (colObj->isStaticObject() || ((maxAabb - minAabb).length2() < btScalar(1e12)))
 	{
 		bp->setAabb(colObj->getBroadphaseHandle(), minAabb, maxAabb, m_dispatcher1);
@@ -198,12 +202,14 @@ void btCollisionWorld::updateAabbs()
 {
 	BT_PROFILE("updateAabbs");
 
+	//コライダーを持つおぶじぇくとの数だけ繰り返す
 	for (int i = 0; i < m_collisionObjects.size(); i++)
 	{
 		btCollisionObject* colObj = m_collisionObjects[i];
 		btAssert(colObj->getWorldArrayIndex() == i);
 
 		//only update aabb of active objects
+		//AABBを更新する
 		if (m_forceUpdateAllAabbs || colObj->isActive())
 		{
 			updateSingleAabb(colObj);
@@ -223,8 +229,10 @@ void btCollisionWorld::performDiscreteCollisionDetection()
 
 	btDispatcherInfo& dispatchInfo = getDispatchInfo();
 
+	//すべてのオブジェクトのAABBを更新する
 	updateAabbs();
 
+	//ブロードフェーズ
 	computeOverlappingPairs();
 
 	btDispatcher* dispatcher = getDispatcher();
