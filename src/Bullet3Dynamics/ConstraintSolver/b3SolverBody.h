@@ -24,7 +24,7 @@ subject to the following restrictions:
 
 ///Until we get other contributions, only use SIMD on Windows, when using Visual Studio 2008 or later, and not double precision
 #ifdef B3_USE_SSE
-#define USE_SIMD 1
+//#define USE_SIMD 1
 #endif  //
 
 #ifdef USE_SIMD

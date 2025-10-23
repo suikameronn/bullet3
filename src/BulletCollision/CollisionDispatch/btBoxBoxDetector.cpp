@@ -303,7 +303,7 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 
 	// Rij is R1'*R2, i.e. the relative rotation between R1 and R2
 	//RijはR1'*R2、つまりR1とR2の間の相対回転である。
-	//R2をR1の座標系を中心とした下院手行列に変換している
+	//R2をR1の座標系を中心とした回転行列に変換している
 	R11 = dDOT44(R1 + 0, R2 + 0);
 	R12 = dDOT44(R1 + 0, R2 + 1);
 	R13 = dDOT44(R1 + 0, R2 + 2);

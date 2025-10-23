@@ -281,6 +281,7 @@ btScalar btSequentialImpulseConstraintSolver::resolveSingleConstraintRowLowerLim
 	return m_resolveSingleConstraintRowLowerLimit(bodyA, bodyB, c);
 }
 
+//おそらく衝突応答の分割インパルスのコード
 static btScalar gResolveSplitPenetrationImpulse_scalar_reference(
 	btSolverBody& bodyA,
 	btSolverBody& bodyB,
@@ -315,6 +316,8 @@ static btScalar gResolveSplitPenetrationImpulse_scalar_reference(
 
 static btScalar gResolveSplitPenetrationImpulse_sse2(btSolverBody& bodyA, btSolverBody& bodyB, const btSolverConstraint& c)
 {
+
+/*
 #ifdef USE_SIMD
 	if (!c.m_rhsPenetration)
 		return 0.f;
@@ -348,6 +351,9 @@ static btScalar gResolveSplitPenetrationImpulse_sse2(btSolverBody& bodyA, btSolv
 #else
 	return gResolveSplitPenetrationImpulse_scalar_reference(bodyA, bodyB, c);
 #endif
+*/
+
+	return gResolveSplitPenetrationImpulse_scalar_reference(bodyA, bodyB, c);
 }
 
 btSequentialImpulseConstraintSolver::btSequentialImpulseConstraintSolver()
@@ -1713,6 +1719,7 @@ void btSequentialImpulseConstraintSolver::solveGroupCacheFriendlySplitImpulseIte
 					{
 						const btSolverConstraint& solveManifold = m_tmpSolverContactConstraintPool[m_orderTmpConstraintPool[j]];
 
+						//衝突応答の分割インパルス法?
 						btScalar residual = resolveSplitPenetrationImpulse(m_tmpSolverBodyPool[solveManifold.m_solverBodyIdA], m_tmpSolverBodyPool[solveManifold.m_solverBodyIdB], solveManifold);
 						leastSquaresResidual = btMax(leastSquaresResidual, residual * residual);
 					}
