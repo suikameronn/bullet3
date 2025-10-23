@@ -78,6 +78,7 @@ public:
 #endif
 		if (predictedOrn.length2() > SIMD_EPSILON)
 		{
+			//‰ñ“]‚ğİ’è‚·‚é
 			predictedTransform.setRotation(predictedOrn);
 		}
 		else

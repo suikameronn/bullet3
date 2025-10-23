@@ -53,6 +53,8 @@ struct btDiscreteCollisionDetectorInterface
 	//
 	// give either closest points (distance > 0) or penetration (distance)
 	// the normal always points from B towards A
+	// 最近接点（距離 > 0）または貫通距離（距離）のいずれかを指定します
+	// 法線は常にBからAの方向を指します
 	//
 	virtual void getClosestPoints(const ClosestPointInput& input, Result& output, class btIDebugDraw* debugDraw, bool swapResults = false) = 0;
 };

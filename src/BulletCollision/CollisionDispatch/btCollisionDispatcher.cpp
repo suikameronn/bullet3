@@ -70,7 +70,12 @@ btPersistentManifold* btCollisionDispatcher::getNewManifold(const btCollisionObj
 	//btAssert(gNumManifold < 65535);
 
 	//optional relative contact breaking threshold, turned on by default (use setDispatcherFlags to switch off feature for improved performance)
-
+	//オプションの相対接触破壊しきい値。デフォルトでオンになっています（パフォーマンスを向上させるために機能をオフにするには、setDispatcherFlags を使用します）。
+	
+	//Bulletでは、一定の距離まで近づいたオブジェクトのペアを記録しておく
+	//上のbtScalarは、どれくらいの距離以上オブジェクトが離れたら記録したペアを破棄するか
+	//下のbtScalarは、どれくらいの距離未満オブジェクトが近づいたら、ペアをソルバーへ送るかの閾値
+	
 	btScalar contactBreakingThreshold = (m_dispatcherFlags & btCollisionDispatcher::CD_USE_RELATIVE_CONTACT_BREAKING_THRESHOLD) ? btMin(body0->getCollisionShape()->getContactBreakingThreshold(gContactBreakingThreshold), body1->getCollisionShape()->getContactBreakingThreshold(gContactBreakingThreshold))
 																																: gContactBreakingThreshold;
 
@@ -91,6 +96,8 @@ btPersistentManifold* btCollisionDispatcher::getNewManifold(const btCollisionObj
 			return 0;
 		}
 	}
+
+	//ここでは、おそらく衝突点は決まっていない
 	btPersistentManifold* manifold = new (mem) btPersistentManifold(body0, body1, 0, contactBreakingThreshold, contactProcessingThreshold);
 	manifold->m_index1a = m_manifoldsPtr.size();
 	m_manifoldsPtr.push_back(manifold);
@@ -228,11 +235,14 @@ void btCollisionDispatcher::dispatchAllCollisionPairs(btOverlappingPairCache* pa
 }
 
 //by default, Bullet will use this near callback
+//衝突時に呼び出されるコールバック?
 void btCollisionDispatcher::defaultNearCallback(btBroadphasePair& collisionPair, btCollisionDispatcher& dispatcher, const btDispatcherInfo& dispatchInfo)
 {
+	//おそらく衝突のペアのそれぞれのコリジョン
 	btCollisionObject* colObj0 = (btCollisionObject*)collisionPair.m_pProxy0->m_clientObject;
 	btCollisionObject* colObj1 = (btCollisionObject*)collisionPair.m_pProxy1->m_clientObject;
 
+	//おそらく二つのコライダーからさらに詳しく衝突を検出する必要があるかどうかを調べる
 	if (dispatcher.needsCollision(colObj0, colObj1))
 	{
 		btCollisionObjectWrapper obj0Wrap(0, colObj0->getCollisionShape(), colObj0, colObj0->getWorldTransform(), -1, -1);
@@ -241,6 +251,7 @@ void btCollisionDispatcher::defaultNearCallback(btBroadphasePair& collisionPair,
 		//dispatcher will keep algorithms persistent in the collision pair
 		if (!collisionPair.m_algorithm)
 		{
+			//ここで、コライダーの形状から衝突アルゴリズムを設定する
 			collisionPair.m_algorithm = dispatcher.findAlgorithm(&obj0Wrap, &obj1Wrap, 0, BT_CONTACT_POINT_ALGORITHMS);
 		}
 

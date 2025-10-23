@@ -273,14 +273,20 @@ void btPersistentManifold::refreshContactPoints(const btTransform& trA, const bt
 	{
 		btManifoldPoint& manifoldPoint = m_pointCache[i];
 		//contact becomes invalid when signed distance exceeds margin (projected on contactnormal direction)
+		//符号付き距離がマージン（接触法線方向に投影）を超えると接触は無効になります。
 		if (!validContactDistance(manifoldPoint))
 		{
+			//多分接触を詳細に判定するかどうかのフラグを解消するかどうかを設定している
+			//ここでは、おそらく二つのコライダーの距離が十分に離れているために
+			//そのフラグを解消する部分だと思う
 			removeContactPoint(i);
 		}
 		else
 		{
 			//todo: friction anchor may require the contact to be around a bit longer
 			//contact also becomes invalid when relative movement orthogonal to normal exceeds margin
+			//todo: 摩擦アンカーは接触をもう少し長く維持する必要がある場合があります
+			//法線に直交する相対的な動きがマージンを超えた場合も接触は無効になります
 			projectedPoint = manifoldPoint.m_positionWorldOnA - manifoldPoint.m_normalWorldOnB * manifoldPoint.m_distance1;
 			projectedDifference = manifoldPoint.m_positionWorldOnB - projectedPoint;
 			distance2d = projectedDifference.dot(projectedDifference);
@@ -291,6 +297,7 @@ void btPersistentManifold::refreshContactPoints(const btTransform& trA, const bt
 			else
 			{
 				//contact point processed callback
+				//ここはtrueにならない?
 				if (gContactProcessedCallback)
 					(*gContactProcessedCallback)(manifoldPoint, (void*)m_body0, (void*)m_body1);
 			}

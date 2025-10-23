@@ -53,15 +53,18 @@ struct CommonRigidBodyBase : public CommonExampleInterface
 	virtual void createEmptyDynamicsWorld()
 	{
 		///collision configuration contains default setup for memory, collision setup
+		//衝突設定には、メモリのデフォルト設定、衝突設定が含まれます
 		m_collisionConfiguration = new btDefaultCollisionConfiguration();
 		//m_collisionConfiguration->setConvexConvexMultipointIterations();
 
 		///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
+		//デフォルトの衝突ディスパッチャを使用します。並列処理の場合は、別のディスパッチャを使用できます（Extras/BulletMultiThreadedを参照）
 		m_dispatcher = new btCollisionDispatcher(m_collisionConfiguration);
 
 		m_broadphase = new btDbvtBroadphase();
 
 		///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
+		//デフォルトの制約ソルバー。並列処理の場合は、別のソルバーを使用できます（Extras/BulletMultiThreadedを参照）
 		btSequentialImpulseConstraintSolver* sol = new btSequentialImpulseConstraintSolver;
 		m_solver = sol;
 
@@ -70,8 +73,10 @@ struct CommonRigidBodyBase : public CommonExampleInterface
 		m_dynamicsWorld->setGravity(btVector3(0, -10, 0));
 	}
 
+	//おそらく、1フレーム分の物理演算を進める
 	virtual void stepSimulation(float deltaTime)
 	{
+		//常にtrue
 		if (m_dynamicsWorld)
 		{
 			m_dynamicsWorld->stepSimulation(deltaTime);
@@ -404,6 +409,8 @@ struct CommonRigidBodyBase : public CommonExampleInterface
 		delete ms;
 	}
 
+	//shapeは一つだけ、オブジェクトの数だけ作られることはない
+	//btTransformとbtRigidBodyはオブジェクトの数だけ作られる
 	btRigidBody* createRigidBody(float mass, const btTransform& startTransform, btCollisionShape* shape, const btVector4& color = btVector4(1, 0, 0, 1))
 	{
 		btAssert((!shape || shape->getShapeType() != INVALID_SHAPE_PROXYTYPE));
@@ -423,6 +430,8 @@ struct CommonRigidBodyBase : public CommonExampleInterface
 
 		btRigidBody::btRigidBodyConstructionInfo cInfo(mass, myMotionState, shape, localInertia);
 
+		//物理的な特性を設定する
+		//Factor系はほとんど1.0か0.0に設定される
 		btRigidBody* body = new btRigidBody(cInfo);
 		//body->setContactProcessingThreshold(m_defaultContactProcessingThreshold);
 

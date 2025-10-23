@@ -243,6 +243,7 @@ public:
 		return pt.m_distance1 <= getContactBreakingThreshold();
 	}
 	/// calculated new worldspace coordinates and depth, and reject points that exceed the collision margin
+	//新しいワールド空間座標と深度を計算し、衝突マージンを超えるポイントを拒否します。
 	void refreshContactPoints(const btTransform& trA, const btTransform& trB);
 
 	SIMD_FORCE_INLINE void clearManifold()

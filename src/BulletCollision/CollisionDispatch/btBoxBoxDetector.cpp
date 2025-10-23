@@ -269,6 +269,10 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 			 const dMatrix3 R2, const btVector3& side2,
 			 btVector3& normal, btScalar* depth, int* return_code,
 			 int maxc, dContactGeom* /*contact*/, int /*skip*/, btDiscreteCollisionDetectorInterface::Result& output);
+
+//上から、重心、回転行列、コライダーのサイズ
+//これを二つのコライダー分与えている
+
 int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 			 const btVector3& side1, const btVector3& p2,
 			 const dMatrix3 R2, const btVector3& side2,
@@ -283,10 +287,13 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 	int i, j, invert_normal, code;
 
 	// get vector from centers of box 1 to box 2, relative to box 1
+	//それぞれのコライダーの重心の地ベクトルの差をとっている
 	p = p2 - p1;
+	//それをコライダー1の回転行列で座標変換を加えている
 	dMULTIPLY1_331(pp, R1, p);  // get pp = p relative to body 1
 
 	// get side lengths / 2
+	//コライダーの各辺の長さの半分を取得
 	A[0] = side1[0] * btScalar(0.5);
 	A[1] = side1[1] * btScalar(0.5);
 	A[2] = side1[2] * btScalar(0.5);
@@ -295,6 +302,8 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 	B[2] = side2[2] * btScalar(0.5);
 
 	// Rij is R1'*R2, i.e. the relative rotation between R1 and R2
+	//RijはR1'*R2、つまりR1とR2の間の相対回転である。
+	//R2をR1の座標系を中心とした下院手行列に変換している
 	R11 = dDOT44(R1 + 0, R2 + 0);
 	R12 = dDOT44(R1 + 0, R2 + 1);
 	R13 = dDOT44(R1 + 0, R2 + 2);
@@ -325,6 +334,15 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 	// set to a vector relative to body 1. invert_normal is 1 if the sign of
 	// the normal should be flipped.
 
+	// 15の可能なすべての分離軸について:
+	// ? ?* その軸がボックスを分離するかどうかを確認する。もし分離していれば、0を返す。
+	// ? ?* その分離軸に沿った貫通深さ (s2) を求める。
+	// ? ?* もしこれがこれまでの最大の深さ（つまり、貫通量が最も小さいとき）であれば、それを記録する。
+	// 法線ベクトルは、最も小さい深さを持つ分離軸に設定される。
+	// 注: normalR は、それがこれまでの最小深さの法線である場合、R1 または R2 の列を指すように設定される。
+	// それ以外の場合、normalR は 0 となり、normalC はボディ1に対する相対ベクトルに設定される。
+	// invert_normal は、法線の符号を反転させるべき場合に 1 になる。
+
 #define TST(expr1, expr2, norm, cc)    \
 	s2 = btFabs(expr1) - (expr2);      \
 	if (s2 > 0) return 0;              \
@@ -341,17 +359,21 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 	code = 0;
 
 	// separating axis = u1,u2,u3
+	//分離軸の候補をそれぞれ試している
 	TST(pp[0], (A[0] + B[0] * Q11 + B[1] * Q12 + B[2] * Q13), R1 + 0, 1);
 	TST(pp[1], (A[1] + B[0] * Q21 + B[1] * Q22 + B[2] * Q23), R1 + 1, 2);
 	TST(pp[2], (A[2] + B[0] * Q31 + B[1] * Q32 + B[2] * Q33), R1 + 2, 3);
 
 	// separating axis = v1,v2,v3
+	//分離軸の候補をそれぞれ試している
 	TST(dDOT41(R2 + 0, p), (A[0] * Q11 + A[1] * Q21 + A[2] * Q31 + B[0]), R2 + 0, 4);
 	TST(dDOT41(R2 + 1, p), (A[0] * Q12 + A[1] * Q22 + A[2] * Q32 + B[1]), R2 + 1, 5);
 	TST(dDOT41(R2 + 2, p), (A[0] * Q13 + A[1] * Q23 + A[2] * Q33 + B[2]), R2 + 2, 6);
 
 	// note: cross product axes need to be scaled when s is computed.
 	// normal (n1,n2,n3) is relative to box 1.
+	// 注意: s を計算する際は、外積軸をスケーリングする必要があります。
+	// 法線 (n1,n2,n3) はボックス 1 を基準とします。
 #undef TST
 #define TST(expr1, expr2, n1, n2, n3, cc)                \
 	s2 = btFabs(expr1) - (expr2);                        \
@@ -407,6 +429,8 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 
 	// if we get to this point, the boxes interpenetrate. compute the normal
 	// in global coordinates.
+	// この点に到達すると、ボックスは相互に貫通します。法線を計算します。
+	// グローバル座標で。
 	if (normalR)
 	{
 		normal[0] = normalR[0];
@@ -426,11 +450,14 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 	*depth = -s;
 
 	// compute contact point(s)
+	//接触点を計算している
 
 	if (code > 6)
 	{
 		// an edge from box 1 touches an edge from box 2.
 		// find a point pa on the intersecting edge of box 1
+		// ボックス 1 のエッジがボックス 2 のエッジに接します。
+		// ボックス 1 の交差エッジ上の点 pa を見つけます。
 		btVector3 pa;
 		btScalar sign;
 		for (i = 0; i < 3; i++) pa[i] = p1[i];
@@ -449,12 +476,21 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 			for (i = 0; i < 3; i++) pb[i] += sign * B[j] * R2[i * 4 + j];
 		}
 
+		//ここまでで、paとpbはそれぞれのコライダーのエッジ上の点を示している
+
+		//ここからエッジとエッジの最近接点を求めている
+
+		//ua,ubは線分の方向ベクトル
 		btScalar alpha, beta;
 		btVector3 ua, ub;
 		for (i = 0; i < 3; i++) ua[i] = R1[((code)-7) / 3 + i * 4];
 		for (i = 0; i < 3; i++) ub[i] = R2[((code)-7) % 3 + i * 4];
 
+		//ここで、二つのpa,pbを線分上の点、ua,ubをそれぞれの線分の方向ベクトルとして
+		//二つの線分の最近接点を求めている
 		dLineClosestApproach(pa, ua, pb, ub, &alpha, &beta);
+
+		//ここで、それぞれのコライダー上の衝突点を求めている
 		for (i = 0; i < 3; i++) pa[i] += ua[i] * alpha;
 		for (i = 0; i < 3; i++) pb[i] += ub[i] * beta;
 
@@ -481,6 +517,10 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 	// face (i.e. the normal vector is perpendicular to this) and face 'b' to be
 	// the incident face (the closest face of the other box).
 
+	// さて、我々は「面-何か」の交差を持っている（分離軸が面に対して垂直であるため）。
+	// 面 'a' を**参照面**（reference face、すなわち、法線ベクトルがこれに垂直な面）と定義し、
+	// 面 'b' を**入射面**（incident face、他方のボックスの最も近い面）と定義する。
+
 	const btScalar *Ra, *Rb, *pa, *pb, *Sa, *Sb;
 	if (code <= 3)
 	{
@@ -503,6 +543,8 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 
 	// nr = normal vector of reference face dotted with axes of incident box.
 	// anr = absolute values of nr.
+	// nr = 入射ボックスの軸が点在する参照面の法線ベクトル。
+	// anr = nr の絶対値。
 	btVector3 normal2, nr, anr;
 	if (code <= 3)
 	{
@@ -516,7 +558,12 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 		normal2[1] = -normal[1];
 		normal2[2] = -normal[2];
 	}
+
+	//法線をローカル座標系に変換する
 	dMULTIPLY1_331(nr, Rb, normal2);
+
+	//法線の絶対値をとる
+	//これは、法線が入射ボックスの軸とどれくらい傾いているかを調べるため
 	anr[0] = btFabs(nr[0]);
 	anr[1] = btFabs(nr[1]);
 	anr[2] = btFabs(nr[2]);
@@ -524,6 +571,10 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 	// find the largest compontent of anr: this corresponds to the normal
 	// for the indident face. the other axis numbers of the indicent face
 	// are stored in a1,a2.
+
+	// anr の最大成分を求めます。これは、内接面の法線に対応します。
+	// 内接面の他の軸番号は、
+	// a1、a2 に格納されます。
 	int lanr, a1, a2;
 	if (anr[1] > anr[0])
 	{
@@ -557,6 +608,7 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 	}
 
 	// compute center point of incident face, in reference-face coordinates
+	//参照面の座標系における入射面の中心点を計算する
 	btVector3 center;
 	if (nr[lanr] < 0)
 	{
@@ -568,6 +620,8 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 	}
 
 	// find the normal and non-normal axis numbers of the reference box
+	// 参照ボックスの法線軸と非法線軸の番号を見つける
+	//参照面をはるエッジのベクトルを求める
 	int codeN, code1, code2;
 	if (code <= 3)
 		codeN = code - 1;
@@ -590,18 +644,27 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 	}
 
 	// find the four corners of the incident face, in reference-face coordinates
-	btScalar quad[8];  // 2D coordinate of incident face (x,y pairs)
+	// 参照面座標で入射面の4隅を見つける
+	btScalar quad[8];  // 2D coordinate of incident face (x,y pairs) 入射面の2D座標（x,yペア）
 	btScalar c1, c2, m11, m12, m21, m22;
+
+	//c1,c2は入射面の中心点の参照面座標系での座標
 	c1 = dDOT14(center, Ra + code1);
 	c2 = dDOT14(center, Ra + code2);
 	// optimize this? - we have already computed this data above, but it is not
 	// stored in an easy-to-index format. for now it's quicker just to recompute
 	// the four dot products.
+	// これを最適化しますか？ - このデータは既に上で計算済みですが、
+	// インデックスしやすい形式で保存されていません。今のところは、4つのドット積を再計算する方が早いです。
+
+	//mijは、入射面の軸を参照面の2D座標系に変換するための行列の成分
 	m11 = dDOT44(Ra + code1, Rb + a1);
 	m12 = dDOT44(Ra + code1, Rb + a2);
 	m21 = dDOT44(Ra + code2, Rb + a1);
 	m22 = dDOT44(Ra + code2, Rb + a2);
 	{
+		//ここで、入射面の4隅の参照面座標系での2D座標を求めている
+
 		btScalar k1 = m11 * Sb[a1];
 		btScalar k2 = m21 * Sb[a1];
 		btScalar k3 = m12 * Sb[a2];
@@ -617,11 +680,13 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 	}
 
 	// find the size of the reference face
+	// 参照面のサイズを見つける
 	btScalar rect[2];
 	rect[0] = Sa[code1];
 	rect[1] = Sa[code2];
 
 	// intersect the incident and reference faces
+	// 入射面と参照面を交差させる
 	btScalar ret[16];
 	int n = intersectRectQuad2(rect, quad, ret);
 	if (n < 1) return 0;  // this should never happen
@@ -630,39 +695,56 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 	// and compute the contact position and depth for each point. only keep
 	// those points that have a positive (penetrating) depth. delete points in
 	// the 'ret' array as necessary so that 'point' and 'ret' correspond.
-	btScalar point[3 * 8];  // penetrating contact points
-	btScalar dep[8];        // depths for those points
+	// 交差点を参照面の座標に変換し、
+	// 各点の接触位置と深度を計算します。正の（貫通する）深度を持つ点のみを保持します。
+	// 必要に応じて 'ret' 配列内の点を削除し、 'point' と 'ret' が対応するようにします。
+	btScalar point[3 * 8];  // penetrating contact points 貫通接触点
+	btScalar dep[8];        // depths for those points これらのポイントの深さ
+
+	//2Dの交点をエッジ上の入射面のローカル座標に変換する逆行列
 	btScalar det1 = 1.f / (m11 * m22 - m12 * m21);
 	m11 *= det1;
 	m12 *= det1;
 	m21 *= det1;
 	m22 *= det1;
-	int cnum = 0;  // number of penetrating contact points found
+	int cnum = 0;  // number of penetrating contact points found 発見された貫通接触点の数
 	for (j = 0; j < n; j++)
 	{
+		//入射面のエッジ上のローカル座標を求める
+
 		btScalar k1 = m22 * (ret[j * 2] - c1) - m12 * (ret[j * 2 + 1] - c2);
 		btScalar k2 = -m21 * (ret[j * 2] - c1) + m11 * (ret[j * 2 + 1] - c2);
+
+		//pointは、ワールド座標系での接触点の位置を示している
 		for (i = 0; i < 3; i++) point[cnum * 3 + i] =
 									center[i] + k1 * Rb[i * 4 + a1] + k2 * Rb[i * 4 + a2];
+
+		//参照面までの距離から接触点までの距離の差を求め、貫通の深さを調べている
 		dep[cnum] = Sa[codeN] - dDOT(normal2, point + cnum * 3);
 		if (dep[cnum] >= 0)
 		{
+			//深度が0以上の場合のみ接触点として採用する
+
 			ret[cnum * 2] = ret[j * 2];
 			ret[cnum * 2 + 1] = ret[j * 2 + 1];
 			cnum++;
 		}
 	}
-	if (cnum < 1) return 0;  // this should never happen
+	if (cnum < 1) return 0;  // this should never happen ここは怒らないはず
 
 	// we can't generate more contacts than we actually have
+	//実際に持っている以上のコンタクトを生成することはできません
 	if (maxc > cnum) maxc = cnum;
 	if (maxc < 1) maxc = 1;
+
+	//以下は、接触点の間引きを行っている
 
 	if (cnum <= maxc)
 	{
 		if (code < 4)
 		{
 			// we have less contacts than we need, so we use them all
+			// 必要な連絡先数よりも少ないので、すべて使用します
 			for (j = 0; j < cnum; j++)
 			{
 				btVector3 pointInWorld;
@@ -674,6 +756,7 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 		else
 		{
 			// we have less contacts than we need, so we use them all
+			// 必要な連絡先数よりも少ないので、すべて使用します
 			for (j = 0; j < cnum; j++)
 			{
 				btVector3 pointInWorld;
@@ -688,6 +771,8 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 	{
 		// we have more contacts than are wanted, some of them must be culled.
 		// find the deepest point, it is always the first contact.
+		// 必要な数よりも多くのコンタクトが存在するため、一部を削除する必要があります。
+		// 最も深いポイントを見つけます。これは常に最初のコンタクトです。
 		int i1 = 0;
 		btScalar maxdepth = dep[0];
 		for (i = 1; i < cnum; i++)
@@ -729,6 +814,8 @@ int dBoxBox2(const btVector3& p1, const dMatrix3 R1,
 
 void btBoxBoxDetector::getClosestPoints(const ClosestPointInput& input, Result& output, class btIDebugDraw* /*debugDraw*/, bool /*swapResults*/)
 {
+	//dBoxBox2までに、回転行列をode形式用に変換している
+
 	const btTransform& transformA = input.m_transformA;
 	const btTransform& transformB = input.m_transformB;
 
@@ -754,6 +841,9 @@ void btBoxBoxDetector::getClosestPoints(const ClosestPointInput& input, Result& 
 	btScalar depth;
 	int return_code;
 	int maxc = 4;
+
+	//上から、重心、回転行列、コライダーのサイズ
+	//これを二つのコライダー分与えている
 
 	dBoxBox2(transformA.getOrigin(),
 			 R1,

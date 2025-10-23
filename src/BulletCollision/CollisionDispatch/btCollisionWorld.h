@@ -82,6 +82,7 @@ class btSerializer;
 #include "LinearMath/btAlignedObjectArray.h"
 
 ///CollisionWorld is interface and container for the collision detection
+//CollisionWorldは衝突検出のためのインターフェースとコンテナです
 class btCollisionWorld
 {
 protected:
@@ -97,6 +98,8 @@ protected:
 
 	///m_forceUpdateAllAabbs can be set to false as an optimization to only update active object AABBs
 	///it is true by default, because it is error-prone (setting the position of static objects wouldn't update their AABB)
+	// m_forceUpdateAllAabbs は、アクティブオブジェクトの AABB のみを更新するように最適化するために false に設定できます。
+	// エラーが発生しやすいため、デフォルトでは true になっています（静的オブジェクトの位置を設定しても AABB は更新されません）。
 	bool m_forceUpdateAllAabbs;
 
 	void serializeCollisionObjects(btSerializer* serializer);
@@ -105,6 +108,7 @@ protected:
 
 public:
 	//this constructor doesn't own the dispatcher and paircache/broadphase
+	//このコンストラクタはディスパッチャとペアキャッシュ/ブロードフェーズを所有していません
 	btCollisionWorld(btDispatcher* dispatcher, btBroadphaseInterface* broadphasePairCache, btCollisionConfiguration* collisionConfiguration);
 
 	virtual ~btCollisionWorld();
@@ -145,6 +149,7 @@ public:
 
 	///the computeOverlappingPairs is usually already called by performDiscreteCollisionDetection (or stepSimulation)
 	///it can be useful to use if you perform ray tests without collision detection/simulation
+	/// //このコンストラクタはディスパッチャとペアキャッシュ/ブロードフェーズをすべて所有していません
 	virtual void computeOverlappingPairs();
 
 	virtual void setDebugDrawer(btIDebugDraw* debugDrawer)
@@ -163,6 +168,8 @@ public:
 
 	///LocalShapeInfo gives extra information for complex shapes
 	///Currently, only btTriangleMeshShape is available, so it just contains triangleIndex and subpart
+	/// ///LocalShapeInfo は複雑な形状に関する追加情報を提供します
+	/// 現在、btTriangleMeshShape のみが利用可能なので、triangleIndex とサブパーツのみが含まれます
 	struct LocalShapeInfo
 	{
 		int m_shapePart;
@@ -192,6 +199,7 @@ public:
 	};
 
 	///RayResultCallback is used to report new raycast results
+	//RayResultCallbackは新しいレイキャスト結果を報告するために使用されます
 	struct RayResultCallback
 	{
 		btScalar m_closestHitFraction;
@@ -199,6 +207,8 @@ public:
 		int m_collisionFilterGroup;
 		int m_collisionFilterMask;
 		//@BP Mod - Custom flags, currently used to enable backface culling on tri-meshes, see btRaycastCallback.h. Apply any of the EFlags defined there on m_flags here to invoke.
+		//@BP Mod - トライメッシュのバックフェースカリングを有効にするために現在使用されているカスタムフラグです。
+		//btRaycastCallback.h を参照してください。ここで定義されている EFlags のいずれかを m_flags に適用して呼び出します。
 		unsigned int m_flags;
 
 		virtual ~RayResultCallback()
@@ -237,6 +247,7 @@ public:
 		{
 		}
 
+		//hitFractionからhitPointWorldを計算するために使用される
 		btVector3 m_rayFromWorld;  //used to calculate hitPointWorld from hitFraction
 		btVector3 m_rayToWorld;
 
@@ -246,6 +257,7 @@ public:
 		virtual btScalar addSingleResult(LocalRayResult& rayResult, bool normalInWorldSpace)
 		{
 			//caller already does the filter on the m_closestHitFraction
+			//呼び出し元はすでにm_closestHitFractionでフィルターを実行しています
 			btAssert(rayResult.m_hitFraction <= m_closestHitFraction);
 
 			m_closestHitFraction = rayResult.m_hitFraction;
@@ -257,6 +269,7 @@ public:
 			else
 			{
 				///need to transform normal into worldspace
+				//法線をワールド空間に変換する必要がある
 				m_hitNormalWorld = m_collisionObject->getWorldTransform().getBasis() * rayResult.m_hitNormalLocal;
 			}
 			m_hitPointWorld.setInterpolate3(m_rayFromWorld, m_rayToWorld, rayResult.m_hitFraction);
@@ -274,6 +287,7 @@ public:
 
 		btAlignedObjectArray<const btCollisionObject*> m_collisionObjects;
 
+		//hitFractionからhitPointWorldを計算するために使用される
 		btVector3 m_rayFromWorld;  //used to calculate hitPointWorld from hitFraction
 		btVector3 m_rayToWorld;
 
@@ -293,6 +307,7 @@ public:
 			else
 			{
 				///need to transform normal into worldspace
+				//法線をワールド空間に変換する必要がある
 				hitNormalWorld = m_collisionObject->getWorldTransform().getBasis() * rayResult.m_hitNormalLocal;
 			}
 			m_hitNormalWorld.push_back(hitNormalWorld);
@@ -327,6 +342,7 @@ public:
 	};
 
 	///RayResultCallback is used to report new raycast results
+	//RayResultCallbackは新しいレイキャスト結果を報告するために使用されます
 	struct ConvexResultCallback
 	{
 		btScalar m_closestHitFraction;
@@ -368,6 +384,7 @@ public:
 		{
 		}
 
+		//hitFractionからhitPointWorldを計算するために使用される
 		btVector3 m_convexFromWorld;  //used to calculate hitPointWorld from hitFraction
 		btVector3 m_convexToWorld;
 
@@ -378,6 +395,7 @@ public:
 		virtual btScalar addSingleResult(LocalConvexResult& convexResult, bool normalInWorldSpace)
 		{
 			//caller already does the filter on the m_closestHitFraction
+			//呼び出し元はすでにm_closestHitFractionでフィルターを実行しています
 			btAssert(convexResult.m_hitFraction <= m_closestHitFraction);
 
 			m_closestHitFraction = convexResult.m_hitFraction;
@@ -389,6 +407,7 @@ public:
 			else
 			{
 				///need to transform normal into worldspace
+				//法線をワールド空間に変換する必要がある
 				m_hitNormalWorld = m_hitCollisionObject->getWorldTransform().getBasis() * convexResult.m_hitNormalLocal;
 			}
 			m_hitPointWorld = convexResult.m_hitPointLocal;
@@ -397,6 +416,7 @@ public:
 	};
 
 	///ContactResultCallback is used to report contact points
+	//ContactResultCallbackはコンタクトポイントを報告するために使用されます
 	struct ContactResultCallback
 	{
 		int m_collisionFilterGroup;
@@ -431,23 +451,34 @@ public:
 
 	/// rayTest performs a raycast on all objects in the btCollisionWorld, and calls the resultCallback
 	/// This allows for several queries: first hit, all hits, any hit, dependent on the value returned by the callback.
+	//rayTest は btCollisionWorld 内のすべてのオブジェクトに対してレイキャストを実行し、resultCallback を呼び出します。
+	//これにより、コールバックによって返される値に応じて、最初のヒット、すべてのヒット、任意のヒットなど、複数のクエリが可能になります。
 	virtual void rayTest(const btVector3& rayFromWorld, const btVector3& rayToWorld, RayResultCallback& resultCallback) const;
 
 	/// convexTest performs a swept convex cast on all objects in the btCollisionWorld, and calls the resultCallback
 	/// This allows for several queries: first hit, all hits, any hit, dependent on the value return by the callback.
+	///凸包テストは、btCollisionWorld内のすべてのオブジェクトに対してスイープ凸包キャストを実行し、resultCallbackを呼び出します。
+	///これにより、コールバックによって返される値に応じて、最初のヒット、すべてのヒット、任意のヒットなど、複数のクエリが可能になります。
 	void convexSweepTest(const btConvexShape* castShape, const btTransform& from, const btTransform& to, ConvexResultCallback& resultCallback, btScalar allowedCcdPenetration = btScalar(0.)) const;
 
 	///contactTest performs a discrete collision test between colObj against all objects in the btCollisionWorld, and calls the resultCallback.
 	///it reports one or more contact points for every overlapping object (including the one with deepest penetration)
+	//contactTest は、btCollisionWorld 内のすべてのオブジェクトに対して colObj 間の個別衝突テストを実行し、resultCallback を呼び出します。
+	//重なり合うオブジェクトごとに 1 つ以上の接触点を報告します (最も深く貫通しているオブジェクトも含む)
 	void contactTest(btCollisionObject* colObj, ContactResultCallback& resultCallback);
 
 	///contactTest performs a discrete collision test between two collision objects and calls the resultCallback if overlap if detected.
 	///it reports one or more contact points (including the one with deepest penetration)
+	//contactTest は、2 つの衝突オブジェクト間の個別の衝突テストを実行し、重複が検出された場合は resultCallback を呼び出します。
+	//1 つ以上の接触点（最も深く貫通したものを含む）を報告します。
 	void contactPairTest(btCollisionObject* colObjA, btCollisionObject* colObjB, ContactResultCallback& resultCallback);
 
 	/// rayTestSingle performs a raycast call and calls the resultCallback. It is used internally by rayTest.
 	/// In a future implementation, we consider moving the ray test as a virtual method in btCollisionShape.
 	/// This allows more customization.
+	// rayTestSingle はレイキャスト呼び出しを実行し、 resultCallback を呼び出します。これは rayTest によって内部的に使用されます。
+	// 将来の実装では、レイテストを btCollisionShape の仮想メソッドとして移動することを検討しています。
+	// これにより、より多くのカスタマイズが可能になります。
 	static void rayTestSingle(const btTransform& rayFromTrans, const btTransform& rayToTrans,
 							  btCollisionObject* collisionObject,
 							  const btCollisionShape* collisionShape,
@@ -459,6 +490,7 @@ public:
 									  RayResultCallback& resultCallback);
 
 	/// objectQuerySingle performs a collision detection query and calls the resultCallback. It is used internally by rayTest.
+	//objectQuerySingleは衝突検出クエリを実行し、resultCallbackを呼び出します。これはrayTestによって内部的に使用されます。
 	static void objectQuerySingle(const btConvexShape* castShape, const btTransform& rayFromTrans, const btTransform& rayToTrans,
 								  btCollisionObject* collisionObject,
 								  const btCollisionShape* collisionShape,
@@ -507,6 +539,7 @@ public:
 	}
 
 	///Preliminary serialization test for Bullet 2.76. Loading those files requires a separate parser (Bullet/Demos/SerializeDemo)
+	//Bullet 2.76 の予備的なシリアル化テストです。これらのファイルを読み込むには、別のパーサー (Bullet/Demos/SerializeDemo) が必要です。
 	virtual void serialize(btSerializer* serializer);
 };
 

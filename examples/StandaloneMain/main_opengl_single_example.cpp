@@ -86,6 +86,7 @@ int main(int argc, char* argv[])
 	example = StandaloneExampleCreateFunc(options);
 	example->processCommandLineArgs(argc, argv);
 
+	//箱をワールドに追加する
 	example->initPhysics();
 	example->resetCamera();
 
@@ -93,7 +94,10 @@ int main(int argc, char* argv[])
 
 	do
 	{
+		//レンダリング用のテクスチャの準備?
 		app->m_instancingRenderer->init();
+
+		//カメラの行列などの更新
 		app->m_instancingRenderer->updateCamera(app->getUpAxis());
 
 		btScalar dtSec = btScalar(clock.getTimeInSeconds());

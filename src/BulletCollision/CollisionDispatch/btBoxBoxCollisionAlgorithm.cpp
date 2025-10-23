@@ -51,6 +51,7 @@ void btBoxBoxCollisionAlgorithm::processCollision(const btCollisionObjectWrapper
 	const btBoxShape* box1 = (btBoxShape*)body1Wrap->getCollisionShape();
 
 	/// report a contact. internally this will be kept persistent, and contact reduction is done
+	//接触を報告します。内部的にはこれが永続的に保持され、接触の削減が行われます
 	resultOut->setPersistentManifold(m_manifoldPtr);
 #ifndef USE_PERSISTENT_CONTACTS
 	m_manifoldPtr->clearManifold();
@@ -58,6 +59,7 @@ void btBoxBoxCollisionAlgorithm::processCollision(const btCollisionObjectWrapper
 
 	btDiscreteCollisionDetectorInterface::ClosestPointInput input;
 	input.m_maximumDistanceSquared = BT_LARGE_FLOAT;
+	//おそらくコライダーのトランスフォームを設定している
 	input.m_transformA = body0Wrap->getWorldTransform();
 	input.m_transformB = body1Wrap->getWorldTransform();
 

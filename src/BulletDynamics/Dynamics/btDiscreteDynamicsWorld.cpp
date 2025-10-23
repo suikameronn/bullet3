@@ -251,6 +251,9 @@ void btDiscreteDynamicsWorld::saveKinematicState(btScalar timeStep)
 	///would like to iterate over m_nonStaticRigidBodies, but unfortunately old API allows
 	///to switch status _after_ adding kinematic objects to the world
 	///fix it for Bullet 3.x release
+	/// /// m_nonStaticRigidBodies を反復処理したいのですが、残念ながら古い API では
+	/// キネマティックオブジェクトをワールドに追加した後にステータスを切り替えることができます
+	/// Bullet 3.x リリースで修正します
 	for (int i = 0; i < m_collisionObjects.size(); i++)
 	{
 		btCollisionObject* colObj = m_collisionObjects[i];
@@ -259,7 +262,10 @@ void btDiscreteDynamicsWorld::saveKinematicState(btScalar timeStep)
 		{
 			if (body->isKinematicObject())
 			{
+				//今のところここは機能していない?
+
 				//to calculate velocities next frame
+				//次のフレームの速度を計算している
 				body->saveKinematicState(timeStep);
 			}
 		}
@@ -306,6 +312,7 @@ void btDiscreteDynamicsWorld::debugDrawWorld()
 		getDebugDrawer()->flushLines();
 }
 
+//すべてのオブジェクトのtotalForceを0ベクトルにしている
 void btDiscreteDynamicsWorld::clearForces()
 {
 	///@todo: iterate over awake simulation islands!
@@ -314,11 +321,14 @@ void btDiscreteDynamicsWorld::clearForces()
 		btRigidBody* body = m_nonStaticRigidBodies[i];
 		//need to check if next line is ok
 		//it might break backward compatibility (people applying forces on sleeping objects get never cleared and accumulate on wake-up
+		//次の行が正しいか確認する必要がある
+		//下位互換性が損なわれる可能性がある（スリープ状態のオブジェクトに力をかけると、クリアされずにウェイクアップ時に蓄積される）
 		body->clearForces();
 	}
 }
 
 ///apply gravity, call this once per timestep
+///重力を加える、1タイムステップごとに1回呼び出す
 void btDiscreteDynamicsWorld::applyGravity()
 {
 	///@todo: iterate over awake simulation islands!
@@ -341,6 +351,9 @@ void btDiscreteDynamicsWorld::synchronizeSingleMotionState(btRigidBody* body)
 		//we need to call the update at least once, even for sleeping objects
 		//otherwise the 'graphics' transform never updates properly
 		///@todo: add 'dirty' flag
+		// スリープ状態のオブジェクトであっても、少なくとも1回は更新を呼び出す必要があります。
+		// そうしないと、「graphics」変換が正しく更新されません。
+		///@todo: 「dirty」フラグを追加します。
 		//if (body->getActivationState() != ISLAND_SLEEPING)
 		{
 			btTransform interpolatedTransform;
@@ -353,9 +366,11 @@ void btDiscreteDynamicsWorld::synchronizeSingleMotionState(btRigidBody* body)
 	}
 }
 
+//すべての物理オブジェクトの速度や位置からワールド空間への座標変換用の行列を作っている?
 void btDiscreteDynamicsWorld::synchronizeMotionStates()
 {
 	//	BT_PROFILE("synchronizeMotionStates");
+	//常にfalse
 	if (m_synchronizeAllMotionStates)
 	{
 		//iterate  over all collision objects
@@ -370,6 +385,7 @@ void btDiscreteDynamicsWorld::synchronizeMotionStates()
 	else
 	{
 		//iterate over all active rigid bodies
+		//動く可能性のあるオブジェクトをすべて処理する
 		for (int i = 0; i < m_nonStaticRigidBodies.size(); i++)
 		{
 			btRigidBody* body = m_nonStaticRigidBodies[i];
@@ -381,6 +397,7 @@ void btDiscreteDynamicsWorld::synchronizeMotionStates()
 
 int btDiscreteDynamicsWorld::stepSimulation(btScalar timeStep, int maxSubSteps, btScalar fixedTimeStep)
 {
+	//今のところ何もしない
 	startProfiling(timeStep);
 
 	int numSimulationSubSteps = 0;
@@ -423,10 +440,15 @@ int btDiscreteDynamicsWorld::stepSimulation(btScalar timeStep, int maxSubSteps, 
 	if (numSimulationSubSteps)
 	{
 		//clamp the number of substeps, to prevent simulation grinding spiralling down to a halt
+		// サブステップの数をクランプして、シミュレーションが停止するのを防ぎます
+
+		//シミュレーションの時間ステップに最大値を設定している
 		int clampedSimulationSteps = (numSimulationSubSteps > maxSubSteps) ? maxSubSteps : numSimulationSubSteps;
 
+		//特に何もしていない?
 		saveKinematicState(fixedTimeStep * clampedSimulationSteps);
 
+		//重力を加える
 		applyGravity();
 
 		for (int i = 0; i < clampedSimulationSteps; i++)
@@ -437,9 +459,11 @@ int btDiscreteDynamicsWorld::stepSimulation(btScalar timeStep, int maxSubSteps, 
 	}
 	else
 	{
+		//すべての物理オブジェクトの速度や位置からワールド空間への座標変換用の行列を作っている?
 		synchronizeMotionStates();
 	}
 
+	//すべてのオブジェクトのtotalForceを0ベクトルにしている
 	clearForces();
 
 #ifndef BT_NO_PROFILE
@@ -459,7 +483,8 @@ void btDiscreteDynamicsWorld::internalSingleStepSimulation(btScalar timeStep)
 	}
 
 	///apply gravity, predict motion
-	//重力を加え、動きを予測する
+	//速度を減衰させ、その状態での座標と回転を決める
+	//重力を採用すると勝てあるが、特にそういった記述はなさそう
 	predictUnconstraintMotion(timeStep);
 
 	btDispatcherInfo& dispatchInfo = getDispatchInfo();
@@ -702,10 +727,12 @@ void btDiscreteDynamicsWorld::solveConstraints(btContactSolverInfo& solverInfo)
 	btTypedConstraint** constraintsPtr = getNumConstraints() ? &m_sortedConstraints[0] : 0;
 
 	m_solverIslandCallback->setup(&solverInfo, constraintsPtr, m_sortedConstraints.size(), getDebugDrawer());
+
+	//特に何もしていない?
 	m_constraintSolver->prepareSolve(getCollisionWorld()->getNumCollisionObjects(), getCollisionWorld()->getDispatcher()->getNumManifolds());
 
 	/// solve all the constraints for this island
-	//ここで実際に衝突を解消する
+	//ここで、オブジェクトの
 	m_islandManager->buildAndProcessIslands(getCollisionWorld()->getDispatcher(), getCollisionWorld(), m_solverIslandCallback);
 
 	m_solverIslandCallback->processConstraints();
@@ -933,6 +960,8 @@ void btDiscreteDynamicsWorld::createPredictiveContactsInternal(btRigidBody** bod
 	}
 }
 
+//btPersistentMainfold＝接触点の配列?
+//GJKだと接触点は一つだけらしい
 void btDiscreteDynamicsWorld::releasePredictiveContacts()
 {
 	BT_PROFILE("release predictive contact manifolds");
@@ -957,6 +986,8 @@ void btDiscreteDynamicsWorld::createPredictiveContacts(btScalar timeStep)
 
 void btDiscreteDynamicsWorld::integrateTransformsInternal(btRigidBody** bodies, int numBodies, btScalar timeStep)
 {
+	//ここは何もしない
+
 	btTransform predictedTrans;
 	for (int i = 0; i < numBodies; i++)
 	{
@@ -1060,6 +1091,8 @@ void btDiscreteDynamicsWorld::integrateTransforms(btScalar timeStep)
 	}
 
 	///this should probably be switched on by default, but it is not well tested yet
+
+	//ここは実行されない
 	if (m_applySpeculativeContactRestitution)
 	{
 		BT_PROFILE("apply speculative contact restitution");
@@ -1107,9 +1140,11 @@ void btDiscreteDynamicsWorld::predictUnconstraintMotion(btScalar timeStep)
 		{
 			//don't integrate/update velocities here, it happens in the constraint solver
 			//ここでは速度を積分・更新しないでください。それは拘束ソルバー（constraint solver）で行われます
+			//速度を強制的に減衰させている
 			body->applyDamping(timeStep);
 
 			//オブジェクトの速度と角速度から、座標と姿勢を計算
+			//ここはあくまで、算出した速度や角速度から行列を作っているだけ
 			body->predictIntegratedTransform(timeStep, body->getInterpolationWorldTransform());
 		}
 	}

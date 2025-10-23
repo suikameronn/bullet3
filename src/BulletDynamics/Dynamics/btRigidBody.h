@@ -56,6 +56,21 @@ enum btRigidBodyFlags
 ///- C) Kinematic objects, which are objects without mass, but the user can move them. There is one-way interaction, and Bullet calculates a velocity based on the timestep and previous and current world transform.
 ///Bullet automatically deactivates dynamic rigid bodies, when the velocity is below a threshold for a given time.
 ///Deactivated (sleeping) rigid bodies don't take any processing time, except a minor broadphase collision detection impact (to allow active objects to activate/wake up sleeping objects)
+
+///btRigidBodyは剛体オブジェクトのための主要なクラスです。
+///パフォーマンスとメモリ使用の観点から、btCollisionShapeオブジェクトは可能な限り共有することが推奨されます。
+/// 剛体には3つのタイプがあります:
+/// 
+/// - A) 動的剛体（Dynamic rigid bodies）：正の質量を持ちます。動きは剛体力学によって制御されます。
+/// - B) 固定オブジェクト（Fixed objects）：質量ゼロ。それらは移動しません（基本的に衝突オブジェクトとして扱われます）。
+/// - C) キネマティックオブジェクト（Kinematic objects）：質量を持たないオブジェクトですが、ユーザーがそれらを動かすことができます。
+/// 
+/// 一方向の相互作用があり、Bulletはタイムステップと、以前および現在のワールドトランスフォームに基づいて速度を計算します。
+/// 
+/// Bulletは、動的剛体の速度が一定時間しきい値を下回ったとき、それらを自動的に**非アクティブ化（deactivates）**します。
+/// 
+/// 非アクティブ化された（スリープ中の）剛体は、わずかなブロードフェイズ衝突検出のインパクトを除いて
+/// 、処理時間を一切消費しません（これは、アクティブなオブジェクトがスリープ中のオブジェクトをアクティブ化/ウェイクアップさせるためです）。
 class btRigidBody : public btCollisionObject
 {
 	btMatrix3x3 m_invInertiaTensorWorld;
@@ -106,12 +121,27 @@ public:
 	///You can use the motion state to synchronize the world transform between physics and graphics objects.
 	///And if the motion state is provided, the rigid body will initialize its initial world transform from the motion state,
 	///m_startWorldTransform is only used when you don't provide a motion state.
+	/// 
+	/// btRigidBodyConstructionInfo構造体は、剛体を作成するための情報を提供します。
+	/// 
+	/// 質量をゼロに設定すると、固定された（非動的な）剛体が作成されます。
+	/// 
+	/// 動的オブジェクトの場合、衝突シェイプを使ってローカル慣性テンソルを概算することができます。そうしない場合はゼロベクトルを使用します（デフォルト引数）。
+	/// 
+	/// モーションステートを使用して、物理オブジェクトとグラフィックスオブジェクト間でワールドトランスフォーム（座標・向き）を同期させることができます。
+	/// 
+	/// そして、モーションステートが提供された場合、剛体はその初期ワールドトランスフォームをモーションステートから初期化します。
+	/// 
+	/// m_startWorldTransformは、モーションステートを提供しない場合にのみ使用されます。
 	struct btRigidBodyConstructionInfo
 	{
 		btScalar m_mass;
 
 		///When a motionState is provided, the rigid body will initialize its world transform from the motion state
 		///In this case, m_startWorldTransform is ignored.
+		/// 
+		/// /// motionState が指定されると、リジッドボディはモーション状態からワールド変換を初期化します。
+		/// この場合、m_startWorldTransform は無視されます。
 		btMotionState* m_motionState;
 		btTransform m_startWorldTransform;
 
@@ -121,13 +151,19 @@ public:
 		btScalar m_angularDamping;
 
 		///best simulation results when friction is non-zero
+		//摩擦がゼロでない場合に最良のシミュレーション結果が得られる
 		btScalar m_friction;
 		///the m_rollingFriction prevents rounded shapes, such as spheres, cylinders and capsules from rolling forever.
 		///See Bullet/Demos/RollingFrictionDemo for usage
+		/// m_rollingFriction は、球、円柱、カプセルなどの丸い形状が永久に転がり続けるのを防ぎます。
+		/// 使用方法については、Bullet/Demos/RollingFrictionDemo を参照してください。
 		btScalar m_rollingFriction;
+
+		//接触法線周りのねじり摩擦
 		btScalar m_spinningFriction;  //torsional friction around contact normal
 
 		///best simulation results using zero restitution.
+		//抵抗がゼロ出ないときに裁量のシミュレーション結果が得られる
 		btScalar m_restitution;
 
 		btScalar m_linearSleepingThreshold;
@@ -135,6 +171,8 @@ public:
 
 		//Additional damping can help avoiding lowpass jitter motion, help stability for ragdolls etc.
 		//Such damping is undesirable, so once the overall simulation quality of the rigid body dynamics system has improved, this should become obsolete
+		//追加の減衰は、モーションのずれを回避し、ラグドールなどの安定性を高められる
+		//このような減衰は望ましくないので、剛体力学システムの全体的なシミュレーション品質が向上したら、これは時代遅れになるはずです。
 		bool m_additionalDamping;
 		btScalar m_additionalDampingFactor;
 		btScalar m_additionalLinearDampingThresholdSqr;
@@ -164,21 +202,26 @@ public:
 	};
 
 	///btRigidBody constructor using construction info
+	//構造体から物理オブジェクトを作る
 	btRigidBody(const btRigidBodyConstructionInfo& constructionInfo);
 
 	///btRigidBody constructor for backwards compatibility.
 	///To specify friction (etc) during rigid body construction, please use the other constructor (using btRigidBodyConstructionInfo)
+	///このコンストラクタは後方互換性のためのもの
+	///摩擦力などを物理オブジェクト作成時に指定するためには、別のコンストラクタを使ってください
 	btRigidBody(btScalar mass, btMotionState* motionState, btCollisionShape* collisionShape, const btVector3& localInertia = btVector3(0, 0, 0));
 
 	virtual ~btRigidBody()
 	{
 		//No constraints should point to this rigidbody
 		//Remove constraints from the dynamics world before you delete the related rigidbodies.
+
 		btAssert(m_constraintRefs.size() == 0);
 	}
 
 protected:
 	///setupRigidBody is only used internally by the constructor
+	//この関数はコンストラクタ内でのみ使われる
 	void setupRigidBody(const btRigidBodyConstructionInfo& constructionInfo);
 
 public:
@@ -186,6 +229,8 @@ public:
 
 	///to keep collision detection and dynamics separate we don't store a rigidbody pointer
 	///but a rigidbody is derived from btCollisionObject, so we can safely perform an upcast
+	/// 衝突判定とダイナミクスを分離するため、リジッドボディポインタは保存しません。
+	/// ただし、リジッドボディは btCollisionObject から派生しているため、安全にアップキャストを実行できます。
 	static const btRigidBody* upcast(const btCollisionObject* colObj)
 	{
 		if (colObj->getInternalType() & btCollisionObject::CO_RIGID_BODY)
@@ -200,6 +245,7 @@ public:
 	}
 
 	/// continuous collision detection needs prediction
+	//継続的な衝突検出には予測が必要
 	void predictIntegratedTransform(btScalar step, btTransform& predictedTransform);
 
 	void saveKinematicState(btScalar step);

@@ -31,6 +31,8 @@ btDefaultMotionState : public btMotionState
 
 	///synchronizes world transform from physics to user
 	///Bullet only calls the update of worldtransform for active objects
+	/// 物理からユーザーへのワールド変換を同期します
+	/// Bulletはアクティブオブジェクトのワールド変換の更新のみを呼び出します
 	virtual void setWorldTransform(const btTransform& centerOfMassWorldTrans)
 	{
 		m_graphicsWorldTrans = centerOfMassWorldTrans * m_centerOfMassOffset;

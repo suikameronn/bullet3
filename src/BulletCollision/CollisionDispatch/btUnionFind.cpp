@@ -55,6 +55,8 @@ public:
 
 ///this is a special operation, destroying the content of btUnionFind.
 ///it sorts the elements, based on island id, in order to make it easy to iterate over islands
+///これは特別な操作で、btUnionFind の内容を破棄します。
+///アイランドの反復処理を容易にするために、アイランド ID に基づいて要素をソートします。
 void btUnionFind::sortIslands()
 {
 	//first store the original body index, and islandId

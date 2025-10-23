@@ -197,12 +197,16 @@ void btSimulationIslandManager::buildIslands(btDispatcher* dispatcher, btCollisi
 {
 	BT_PROFILE("islandUnionFindAndQuickSort");
 
+	//シーン上のコライダーを持つオブジェクトの配列
 	btCollisionObjectArray& collisionObjects = collisionWorld->getCollisionObjectArray();
 
 	m_islandmanifold.resize(0);
 
 	//we are going to sort the unionfind array, and store the element id in the size
 	//afterwards, we clean unionfind, to make sure no-one uses it anymore
+
+	//unionfind配列をソートし、要素IDをsizeに格納します。
+	//その後、unionfindをクリーンアップして、誰も使用しないようにします。
 
 	getUnionFind().sortIslands();
 	int numElem = getUnionFind().getNumElements();
@@ -211,6 +215,7 @@ void btSimulationIslandManager::buildIslands(btDispatcher* dispatcher, btCollisi
 	int startIslandIndex;
 
 	//update the sleeping state for bodies, if all are sleeping
+	//すべてのボディがスリープ状態の場合、ボディのスリープ状態を更新する
 	for (startIslandIndex = 0; startIslandIndex < numElem; startIslandIndex = endIslandIndex)
 	{
 		int islandId = getUnionFind().getElement(startIslandIndex).m_id;

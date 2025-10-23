@@ -1400,6 +1400,7 @@ void btSequentialImpulseConstraintSolver::convertBodies(btCollisionObject** bodi
 	}
 }
 
+//様々なデータをソルバ用の形式に変形している
 btScalar btSequentialImpulseConstraintSolver::solveGroupCacheFriendlySetup(btCollisionObject** bodies, int numBodies, btPersistentManifold** manifoldPtr, int numManifolds, btTypedConstraint** constraints, int numConstraints, const btContactSolverInfo& infoGlobal, btIDebugDraw* debugDrawer)
 {
 	m_fixedBodyId = -1;
@@ -1694,6 +1695,7 @@ btScalar btSequentialImpulseConstraintSolver::solveSingleIteration(int iteration
 	return leastSquaresResidual;
 }
 
+//ここで貫通を解消している
 void btSequentialImpulseConstraintSolver::solveGroupCacheFriendlySplitImpulseIterations(btCollisionObject** bodies, int numBodies, btPersistentManifold** manifoldPtr, int numManifolds, btTypedConstraint** constraints, int numConstraints, const btContactSolverInfo& infoGlobal, btIDebugDraw* debugDrawer)
 {
 	BT_PROFILE("solveGroupCacheFriendlySplitImpulseIterations");
@@ -1727,12 +1729,14 @@ void btSequentialImpulseConstraintSolver::solveGroupCacheFriendlySplitImpulseIte
 	}
 }
 
+//複数回インパルスを適用して、拘束条件を満たすようにする
 btScalar btSequentialImpulseConstraintSolver::solveGroupCacheFriendlyIterations(btCollisionObject** bodies, int numBodies, btPersistentManifold** manifoldPtr, int numManifolds, btTypedConstraint** constraints, int numConstraints, const btContactSolverInfo& infoGlobal, btIDebugDraw* debugDrawer)
 {
 	BT_PROFILE("solveGroupCacheFriendlyIterations");
 
 	{
 		///this is a special step to resolve penetrations (just for contacts)
+		//これは、貫通を解決するための特別なステップです（連絡先のみ）
 		solveGroupCacheFriendlySplitImpulseIterations(bodies, numBodies, manifoldPtr, numManifolds, constraints, numConstraints, infoGlobal, debugDrawer);
 
 		int maxIterations = m_maxOverrideNumSolverIterations > infoGlobal.m_numIterations ? m_maxOverrideNumSolverIterations : infoGlobal.m_numIterations;
@@ -1855,6 +1859,7 @@ btScalar btSequentialImpulseConstraintSolver::solveGroupCacheFriendlyFinish(btCo
 }
 
 /// btSequentialImpulseConstraintSolver Sequentially applies impulses
+//btSequentialImpulseConstraintSolver 順次インパルスを適用する
 btScalar btSequentialImpulseConstraintSolver::solveGroup(btCollisionObject** bodies, int numBodies, btPersistentManifold** manifoldPtr, int numManifolds, btTypedConstraint** constraints, int numConstraints, const btContactSolverInfo& infoGlobal, btIDebugDraw* debugDrawer, btDispatcher* /*dispatcher*/)
 {
 	BT_PROFILE("solveGroup");
